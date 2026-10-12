@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "VagaJá",
+    "slug": "vagaja",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "platforms": ["ios", "android", "web"],
+    "web": { "bundler": "metro" }
+  }
+}
