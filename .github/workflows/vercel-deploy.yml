@@ -16,6 +16,10 @@ jobs:
       # URL do gateway (Render) vem de um secret, nunca escrita no codigo.
       # O Expo embute variaveis EXPO_PUBLIC_* no build do front.
       EXPO_PUBLIC_API_URL: ${{ secrets.API_URL }}
+      # Uma URL por microsservico, cada uma de um secret proprio (se nao existir, o app usa a API_URL)
+      EXPO_PUBLIC_LOGIN_URL: ${{ secrets.LOGIN_URL }}
+      EXPO_PUBLIC_VAGAS_URL: ${{ secrets.VAGAS_URL }}
+      EXPO_PUBLIC_CANDIDATURA_URL: ${{ secrets.CANDIDATURA_URL }}
     steps:
       - uses: actions/checkout@v4
 

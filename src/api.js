@@ -1,4 +1,4 @@
-import { API_URL } from './config';
+import { API_URL, CANDIDATURA_URL, LOGIN_URL, VAGAS_URL } from './config';
 
 export class ApiError extends Error {
   constructor(status, message) {
@@ -37,6 +37,14 @@ async function fetchComRetry(url, opcoes, repetir) {
 const MSG_INDISPONIVEL =
   'Servidor indisponivel ou acordando (o plano gratuito pode levar ate 1 minuto). Tente novamente em instantes.';
 
+// Escolhe a URL base conforme o microsservico dono da rota.
+function baseDaRota(caminho) {
+  if (caminho.startsWith('/fatec/login')) return LOGIN_URL;
+  if (caminho.startsWith('/candidaturas') || caminho.startsWith('/fatec/admin/relatorio')) return CANDIDATURA_URL;
+  if (caminho.startsWith('/vagas') || caminho.startsWith('/fatec/admin/vagas')) return VAGAS_URL;
+  return API_URL;
+}
+
 let aoExpirarSessao = null;
 export function registrarAoExpirarSessao(callback) {
   aoExpirarSessao = callback;
@@ -50,10 +58,11 @@ export async function request(caminho, { method = 'GET', body, token } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
 
+  const base = baseDaRota(caminho);
   let resposta;
   try {
     resposta = await fetchComRetry(
-      `${API_URL}${caminho}`,
+      `${base}${caminho}`,
       {
         method,
         headers,
