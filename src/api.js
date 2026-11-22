@@ -7,6 +7,36 @@ export class ApiError extends Error {
   }
 }
 
+// RETRY: leituras (GET) que falham por rede ou por 502/503/504 (servidor acordando no Render gratuito,
+// que pode levar ate ~1 min) sao repetidas esperando 1s, 2s e 4s antes de desistir.
+const ESPERAS_MS = [1000, 2000, 4000];
+const STATUS_RETRY = [502, 503, 504];
+const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchComRetry(url, opcoes, repetir) {
+  const tentativas = repetir ? ESPERAS_MS.length + 1 : 1;
+  let erro;
+  for (let i = 0; i < tentativas; i++) {
+    const ultima = i === tentativas - 1;
+    try {
+      const resposta = await fetch(url, opcoes);
+      if (!ultima && STATUS_RETRY.includes(resposta.status)) {
+        await esperar(ESPERAS_MS[i]);
+        continue;
+      }
+      return resposta;
+    } catch (e) {
+      erro = e;
+      if (!ultima) await esperar(ESPERAS_MS[i]);
+    }
+  }
+  throw erro;
+}
+
+// FALLBACK: mensagem amigavel quando o servidor nao responde mesmo depois das tentativas
+const MSG_INDISPONIVEL =
+  'Servidor indisponivel ou acordando (o plano gratuito pode levar ate 1 minuto). Tente novamente em instantes.';
+
 let aoExpirarSessao = null;
 export function registrarAoExpirarSessao(callback) {
   aoExpirarSessao = callback;
@@ -22,14 +52,18 @@ export async function request(caminho, { method = 'GET', body, token } = {}) {
 
   let resposta;
   try {
-    resposta = await fetch(`${API_URL}${caminho}`, {
-      method,
-      headers,
-      credentials: 'include', // web: deixa o navegador guardar o cookie access_token enviado pelo login
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
+    resposta = await fetchComRetry(
+      `${API_URL}${caminho}`,
+      {
+        method,
+        headers,
+        credentials: 'include', // web: deixa o navegador guardar o cookie access_token enviado pelo login
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      },
+      method === 'GET'
+    );
   } catch (e) {
-    throw new ApiError(0, `Não foi possível falar com o servidor (${API_URL}). O gateway está rodando?`);
+    throw new ApiError(0, MSG_INDISPONIVEL);
   }
 
   const texto = await resposta.text();
@@ -46,8 +80,10 @@ export async function request(caminho, { method = 'GET', body, token } = {}) {
       (dados && dados.erro) ||
       (resposta.status === 401
         ? 'Sessão expirada. Entre novamente.'
-        : resposta.status >= 500
-          ? `Erro ${resposta.status} no servidor. Veja o console do gateway e dos microsserviços.`
+        : STATUS_RETRY.includes(resposta.status)
+          ? MSG_INDISPONIVEL
+          : resposta.status >= 500
+            ? `Erro ${resposta.status} no servidor. Tente novamente em instantes.`
           : `Erro ${resposta.status}`);
     throw new ApiError(resposta.status, mensagem);
   }
