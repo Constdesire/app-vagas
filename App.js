@@ -24,6 +24,14 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   link.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap';
   document.head.appendChild(link);
   document.title = 'VagaJá';
+  // Idioma da pagina e sem traducao automatica: o tradutor do Chrome reescreve os textos e o React
+  // deixa de atualiza-los (ex.: o contador de vagas livres ficava congelado).
+  document.documentElement.lang = 'pt-BR';
+  document.documentElement.setAttribute('translate', 'no');
+  const meta = document.createElement('meta');
+  meta.name = 'google';
+  meta.content = 'notranslate';
+  document.head.appendChild(meta);
   document.body.style.backgroundColor = cores.fundo;
   document.body.style.margin = '0';
   const css = document.createElement('style');
