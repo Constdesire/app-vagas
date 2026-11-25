@@ -7,8 +7,8 @@ export class ApiError extends Error {
   }
 }
 
-// RETRY: leituras (GET) que falham por rede ou por 502/503/504 (servidor acordando no Render gratuito,
-// que pode levar ate ~1 min) sao repetidas esperando 1s, 2s e 4s antes de desistir.
+// RETRY leituras que falham por rede ou servidor acordando no Render,
+// que pode levar ate 1 min sao repetidas esperando  antes de desistir.
 const ESPERAS_MS = [1000, 2000, 4000];
 const STATUS_RETRY = [502, 503, 504];
 const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -33,7 +33,7 @@ async function fetchComRetry(url, opcoes, repetir) {
   throw erro;
 }
 
-// FALLBACK: mensagem amigavel quando o servidor nao responde mesmo depois das tentativas
+// FALLBACK mensagem quando o servidor nao responde mesmo depois das tentativas
 const MSG_INDISPONIVEL =
   'Servidor indisponivel ou acordando (o plano gratuito pode levar ate 1 minuto). Tente novamente em instantes.';
 
@@ -50,10 +50,6 @@ export function registrarAoExpirarSessao(callback) {
   aoExpirarSessao = callback;
 }
 
-/**
- * Chamada única para o gateway. Todo request autenticado leva
- * "Authorization: Bearer <token>", que é o que o gateway (oauth2 resource server) valida.
- */
 export async function request(caminho, { method = 'GET', body, token } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -66,7 +62,7 @@ export async function request(caminho, { method = 'GET', body, token } = {}) {
       {
         method,
         headers,
-        credentials: 'include', // web: deixa o navegador guardar o cookie access_token enviado pelo login
+        credentials: 'include', // web deixa o navegador guardar o cookie access_token enviado pelo login
         body: body !== undefined ? JSON.stringify(body) : undefined,
       },
       method === 'GET'
