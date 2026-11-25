@@ -38,7 +38,7 @@ export default function VagasScreen({ vagas, carregou, erro, candidaturas, abrir
     >
       <View style={styles.cabecalho}>
         <Text style={styles.titulo}>Vagas</Text>
-        <Text style={styles.sub}>Escolha uma vaga e candidate-se. Você acompanha o resultado em Minhas candidaturas.</Text>
+        <Text style={styles.sub}>Sem vagas. Você acompanha o resultado em Minhas candidaturas.</Text>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtros} style={{ flexGrow: 0 }}>
